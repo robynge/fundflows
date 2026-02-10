@@ -173,31 +173,33 @@ def main():
     with tab1:
         st.subheader("ARK Funds vs Top 100 Inflows")
 
-        col_controls, col_chart = st.columns([1, 3])
-
-        with col_controls:
+        col1, col2 = st.columns(2)
+        with col1:
             flow_type_1 = st.radio(
                 "Flow Type:",
                 ["Cumulative", "Daily"],
-                key="flow_type_inflows"
+                key="flow_type_inflows",
+                horizontal=True
             )
+        with col2:
             value_type_1 = st.radio(
                 "Value Type:",
                 ["Absolute Value", "% of AUM"],
-                key="value_type_inflows"
+                key="value_type_inflows",
+                horizontal=True
             )
-            st.markdown("---")
+
+        col_filter, col_chart = st.columns([1, 4])
+
+        with col_filter:
             st.markdown("**Filter Top 100 ETFs**")
-            select_all_1 = st.checkbox("Select All", value=True, key="select_all_inflows")
-            if select_all_1:
-                selected_inflows = inflow_tickers_sorted
-            else:
-                selected_inflows = st.multiselect(
-                    "Select ETFs:",
-                    options=inflow_tickers_sorted,
-                    default=inflow_tickers_sorted[:10],
-                    key="selected_inflows"
-                )
+            selected_inflows = st.multiselect(
+                "Select ETFs:",
+                options=inflow_tickers_sorted,
+                default=inflow_tickers_sorted,
+                key="selected_inflows",
+                label_visibility="collapsed"
+            )
 
         with col_chart:
             fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, aum_dict)
@@ -206,31 +208,33 @@ def main():
     with tab2:
         st.subheader("ARK Funds vs Top 100 Outflows")
 
-        col_controls, col_chart = st.columns([1, 3])
-
-        with col_controls:
+        col1, col2 = st.columns(2)
+        with col1:
             flow_type_2 = st.radio(
                 "Flow Type:",
                 ["Cumulative", "Daily"],
-                key="flow_type_outflows"
+                key="flow_type_outflows",
+                horizontal=True
             )
+        with col2:
             value_type_2 = st.radio(
                 "Value Type:",
                 ["Absolute Value", "% of AUM"],
-                key="value_type_outflows"
+                key="value_type_outflows",
+                horizontal=True
             )
-            st.markdown("---")
+
+        col_filter, col_chart = st.columns([1, 4])
+
+        with col_filter:
             st.markdown("**Filter Top 100 ETFs**")
-            select_all_2 = st.checkbox("Select All", value=True, key="select_all_outflows")
-            if select_all_2:
-                selected_outflows = outflow_tickers_sorted
-            else:
-                selected_outflows = st.multiselect(
-                    "Select ETFs:",
-                    options=outflow_tickers_sorted,
-                    default=outflow_tickers_sorted[:10],
-                    key="selected_outflows"
-                )
+            selected_outflows = st.multiselect(
+                "Select ETFs:",
+                options=outflow_tickers_sorted,
+                default=outflow_tickers_sorted,
+                key="selected_outflows",
+                label_visibility="collapsed"
+            )
 
         with col_chart:
             fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, aum_dict)
