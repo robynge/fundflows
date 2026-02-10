@@ -4,6 +4,20 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="ETF Fund Flows Analysis", layout="wide")
 
+def parse_aum(aum_str):
+    """Parse AUM string like '$868.24B' to millions"""
+    if pd.isna(aum_str):
+        return None
+    aum_str = str(aum_str).replace('$', '').replace(',', '').strip()
+    if aum_str.endswith('B'):
+        return float(aum_str[:-1]) * 1000  # Convert B to M
+    elif aum_str.endswith('M'):
+        return float(aum_str[:-1])
+    elif aum_str.endswith('K'):
+        return float(aum_str[:-1]) / 1000
+    else:
+        return float(aum_str)
+
 @st.cache_data
 def load_data():
     xlsx = pd.ExcelFile('ETF_Fund_Flows_5016_Complete.xlsx')
@@ -15,7 +29,16 @@ def load_data():
     for df in [ark_funds, top100_inflows, top100_outflows]:
         df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 
-    return ark_funds, top100_inflows, top100_outflows
+    # Load AUM data
+    aum_df = pd.read_csv('etf_screener_data.csv')
+    aum_dict = {}
+    for _, row in aum_df.iterrows():
+        ticker = row['Ticker']
+        aum = parse_aum(row['AUM'])
+        if aum:
+            aum_dict[ticker] = aum
+
+    return ark_funds, top100_inflows, top100_outflows, aum_dict
 
 def get_sorted_tickers(df, ascending=False):
     """Sort tickers by total fund flows"""
@@ -24,7 +47,7 @@ def get_sorted_tickers(df, ascending=False):
     sorted_tickers = sorted(totals.keys(), key=lambda x: totals[x], reverse=not ascending)
     return sorted_tickers
 
-def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers):
+def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers, aum_dict):
     """Create a plotly chart comparing ARK funds vs top100"""
     fig = go.Figure()
 
@@ -45,12 +68,18 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         ark_data = ark_df.copy()
         top100_data = top100_df.copy()
 
-    # Calculate percentage change if selected
-    if value_type == "Percentage Change":
+    # Calculate percentage of AUM if selected
+    if value_type == "% of AUM":
         for col in ark_columns:
-            ark_data[col] = ark_data[col].pct_change() * 100
+            if col in aum_dict and aum_dict[col] > 0:
+                ark_data[col] = ark_data[col] / aum_dict[col] * 100
+            else:
+                ark_data[col] = 0
         for col in top100_columns:
-            top100_data[col] = top100_data[col].pct_change() * 100
+            if col in aum_dict and aum_dict[col] > 0:
+                top100_data[col] = top100_data[col] / aum_dict[col] * 100
+            else:
+                top100_data[col] = 0
 
     # Add top100 lines (gray, thinner)
     for col in top100_columns:
@@ -96,7 +125,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         legendgroup='top100'
     ))
 
-    y_title = "Flow Value ($ Millions)" if value_type == "Absolute Value" else "Percentage Change (%)"
+    y_title = "Flow Value ($ Millions)" if value_type == "Absolute Value" else "% of AUM"
     if flow_type == "Cumulative":
         y_title = "Cumulative " + y_title
 
@@ -122,7 +151,7 @@ def main():
     st.markdown("Comparing **ARK Funds** performance against Top 100 ETFs")
 
     # Load data
-    ark_funds, top100_inflows, top100_outflows = load_data()
+    ark_funds, top100_inflows, top100_outflows, aum_dict = load_data()
 
     # Get sorted tickers
     inflow_tickers_sorted = get_sorted_tickers(top100_inflows, ascending=False)  # Highest first
@@ -144,7 +173,7 @@ def main():
             )
             value_type_1 = st.radio(
                 "Value Type:",
-                ["Absolute Value", "Percentage Change"],
+                ["Absolute Value", "% of AUM"],
                 key="value_type_inflows"
             )
             st.markdown("---")
@@ -161,7 +190,7 @@ def main():
                 )
 
         with col_chart:
-            fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows)
+            fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, aum_dict)
             st.plotly_chart(fig1, width="stretch")
 
     with tab2:
@@ -177,7 +206,7 @@ def main():
             )
             value_type_2 = st.radio(
                 "Value Type:",
-                ["Absolute Value", "Percentage Change"],
+                ["Absolute Value", "% of AUM"],
                 key="value_type_outflows"
             )
             st.markdown("---")
@@ -194,7 +223,7 @@ def main():
                 )
 
         with col_chart:
-            fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows)
+            fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, aum_dict)
             st.plotly_chart(fig2, width="stretch")
 
     with tab3:

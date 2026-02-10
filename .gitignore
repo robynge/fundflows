@@ -19,6 +19,7 @@ Thumbs.db
 # Streamlit
 .streamlit/secrets.toml
 
-# Data files (keep only the main Excel file)
+# Data files (keep only the main Excel file and AUM data)
 all/
 *.csv
+!etf_screener_data.csv
