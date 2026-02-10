@@ -58,7 +58,7 @@ def get_sorted_tickers_by_1yr_flow(tickers, flow_1yr_dict):
     """Sort tickers by absolute value of 1 Yr Fund Flow (largest first)"""
     return sorted(tickers, key=lambda x: abs(flow_1yr_dict.get(x, 0)), reverse=True)
 
-def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers, aum_dict):
+def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers, highlight_tickers, aum_dict):
     """Create a plotly chart comparing ARK funds vs top100"""
     fig = go.Figure()
 
@@ -111,18 +111,29 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
     # Build hover template showing ARK funds
     ark_hover_lines = "<br>".join([f"{col}: %{{customdata[{i}]:.2f}}{unit}" for i, col in enumerate(ark_columns)])
 
-    # Add top100 lines (gray, thinner)
+    # Add top100 lines
+    highlight_set = set(highlight_tickers) if highlight_tickers else set()
     for col in top100_columns:
+        is_highlighted = col in highlight_set
+        if is_highlighted:
+            line_style = dict(color='#FF6600', width=2.5)
+            show_legend = True
+            legend_group = 'highlighted'
+        else:
+            line_style = dict(color='rgba(150, 150, 150, 0.3)', width=1)
+            show_legend = False
+            legend_group = 'top100'
+
         fig.add_trace(go.Scatter(
             x=top100_data['Date'],
             y=top100_data[col],
             mode='lines',
             name=col,
-            line=dict(color='rgba(150, 150, 150, 0.3)', width=1),
+            line=line_style,
             customdata=ark_customdata,
             hovertemplate=f"%{{x|%Y-%m-%d}}<br><b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>",
-            legendgroup='top100',
-            showlegend=False
+            legendgroup=legend_group,
+            showlegend=show_legend
         ))
 
     # Add ARK fund lines (colored, thicker, highlighted)
@@ -219,7 +230,17 @@ def main():
                 label_visibility="collapsed"
             )
 
-        fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, aum_dict)
+        with st.expander("**Highlight ETFs** (click to expand)", expanded=False):
+            highlight_inflows = st.pills(
+                "Highlight ETFs:",
+                options=inflow_tickers_sorted,
+                default=[],
+                selection_mode="multi",
+                key="highlight_inflows",
+                label_visibility="collapsed"
+            )
+
+        fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, highlight_inflows, aum_dict)
         st.plotly_chart(fig1, width="stretch")
 
     with tab2:
@@ -251,7 +272,17 @@ def main():
                 label_visibility="collapsed"
             )
 
-        fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, aum_dict)
+        with st.expander("**Highlight ETFs** (click to expand)", expanded=False):
+            highlight_outflows = st.pills(
+                "Highlight ETFs:",
+                options=outflow_tickers_sorted,
+                default=[],
+                selection_mode="multi",
+                key="highlight_outflows",
+                label_visibility="collapsed"
+            )
+
+        fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, highlight_outflows, aum_dict)
         st.plotly_chart(fig2, width="stretch")
 
     with tab3:
