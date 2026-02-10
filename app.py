@@ -176,7 +176,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
 def main():
     st.title("ETF Fund Flows Analysis")
     st.markdown("Comparing **ARK Funds** performance against Top 100 ETFs")
-    st.caption("Fund flows in $ Millions | AUM converted to Millions (B×1000, M×1)")
+    st.caption("Top 100 Inflows: ETFs with highest 1-Year Fund Flow | Top 100 Outflows: ETFs with lowest 1-Year Fund Flow")
 
     # Load data
     ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict = load_data()
