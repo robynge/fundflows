@@ -120,7 +120,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             name=col,
             line=dict(color='rgba(150, 150, 150, 0.3)', width=1),
             customdata=ark_customdata,
-            hovertemplate=f"<b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>",
+            hovertemplate=f"%{{x|%Y-%m-%d}}<br><b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>",
             legendgroup='top100',
             showlegend=False
         ))
@@ -135,7 +135,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             name=col,
             line=dict(color=color, width=3),
             customdata=ark_customdata,
-            hovertemplate=f"<b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>"
+            hovertemplate=f"%{{x|%Y-%m-%d}}<br><b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>"
         ))
 
     # Add a dummy trace for legend grouping
