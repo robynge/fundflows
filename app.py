@@ -92,20 +92,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             else:
                 top100_data[col] = 0
 
-    # Add top100 lines (gray, thinner)
-    for col in top100_columns:
-        fig.add_trace(go.Scatter(
-            x=top100_data['Date'],
-            y=top100_data[col],
-            mode='lines',
-            name=col,
-            line=dict(color='rgba(150, 150, 150, 0.3)', width=1),
-            hovertemplate=f'{col}: %{{y:.2f}}<extra></extra>',
-            legendgroup='top100',
-            showlegend=False
-        ))
-
-    # Add ARK fund lines (colored, thicker, highlighted)
+    # Build customdata with all ARK values for each date
     ark_colors = {
         'ARKK': '#FF6B6B',
         'ARKF': '#4ECDC4',
@@ -115,6 +102,27 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         'ARKQ': '#DDA0DD'
     }
 
+    # Create customdata array: each row has [ARKK, ARKF, ARKB, ARKX, ARKG, ARKQ]
+    ark_customdata = ark_data[ark_columns].values
+
+    # Build hover template showing ARK funds
+    ark_hover_lines = "<br>".join([f"{col}: %{{customdata[{i}]:.2f}}" for i, col in enumerate(ark_columns)])
+
+    # Add top100 lines (gray, thinner)
+    for col in top100_columns:
+        fig.add_trace(go.Scatter(
+            x=top100_data['Date'],
+            y=top100_data[col],
+            mode='lines',
+            name=col,
+            line=dict(color='rgba(150, 150, 150, 0.3)', width=1),
+            customdata=ark_customdata,
+            hovertemplate=f"<b>{col}: %{{y:.2f}}</b><br>---<br>{ark_hover_lines}<extra></extra>",
+            legendgroup='top100',
+            showlegend=False
+        ))
+
+    # Add ARK fund lines (colored, thicker, highlighted)
     for col in ark_columns:
         color = ark_colors.get(col, '#FF0000')
         fig.add_trace(go.Scatter(
@@ -123,7 +131,8 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             mode='lines',
             name=col,
             line=dict(color=color, width=3),
-            hovertemplate=f'{col}: %{{y:.2f}}<extra></extra>'
+            customdata=ark_customdata,
+            hovertemplate=f"<b>{col}: %{{y:.2f}}</b><br>---<br>{ark_hover_lines}<extra></extra>"
         ))
 
     # Add a dummy trace for legend grouping
