@@ -189,21 +189,18 @@ def main():
                 horizontal=True
             )
 
-        col_filter, col_chart = st.columns([1, 4])
-
-        with col_filter:
-            st.markdown("**Filter Top 100 ETFs**")
-            selected_inflows = st.multiselect(
+        with st.expander("**Filter Top 100 ETFs** (click to expand)", expanded=False):
+            selected_inflows = st.pills(
                 "Select ETFs:",
                 options=inflow_tickers_sorted,
                 default=inflow_tickers_sorted,
+                selection_mode="multi",
                 key="selected_inflows",
                 label_visibility="collapsed"
             )
 
-        with col_chart:
-            fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, aum_dict)
-            st.plotly_chart(fig1, width="stretch")
+        fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows, aum_dict)
+        st.plotly_chart(fig1, width="stretch")
 
     with tab2:
         st.subheader("ARK Funds vs Top 100 Outflows")
@@ -224,21 +221,18 @@ def main():
                 horizontal=True
             )
 
-        col_filter, col_chart = st.columns([1, 4])
-
-        with col_filter:
-            st.markdown("**Filter Top 100 ETFs**")
-            selected_outflows = st.multiselect(
+        with st.expander("**Filter Top 100 ETFs** (click to expand)", expanded=False):
+            selected_outflows = st.pills(
                 "Select ETFs:",
                 options=outflow_tickers_sorted,
                 default=outflow_tickers_sorted,
+                selection_mode="multi",
                 key="selected_outflows",
                 label_visibility="collapsed"
             )
 
-        with col_chart:
-            fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, aum_dict)
-            st.plotly_chart(fig2, width="stretch")
+        fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows, aum_dict)
+        st.plotly_chart(fig2, width="stretch")
 
     with tab3:
         st.subheader("Download Data")
