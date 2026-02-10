@@ -266,7 +266,7 @@ def main():
             )
 
         st.markdown("---")
-        st.markdown("### Data Preview (5016 ETFs)")
+        st.markdown("### Fund List (5016 ETFs)")
         st.dataframe(etf_list, width="stretch", height=500)
 
 if __name__ == "__main__":
