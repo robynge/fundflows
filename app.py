@@ -102,17 +102,32 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         'ARKQ': '#DDA0DD'
     }
 
-    # Create customdata array: each row has [ARKK, ARKF, ARKB, ARKX, ARKG, ARKQ]
-    ark_customdata = ark_data[ark_columns].values
-
     # Unit based on value type
     unit = "%" if value_type == "% of AUM" else "M"
+
+    # Build customdata: ARK values + highlighted ticker values
+    highlight_list = list(highlight_tickers) if highlight_tickers else []
+    highlight_set = set(highlight_list)
+
+    # Combine ARK data and highlight data for customdata
+    import numpy as np
+    if highlight_list:
+        highlight_data_cols = [top100_data[col].values if col in top100_data.columns else np.zeros(len(top100_data)) for col in highlight_list]
+        combined_customdata = np.column_stack([ark_data[ark_columns].values] + highlight_data_cols)
+    else:
+        combined_customdata = ark_data[ark_columns].values
 
     # Build hover template showing ARK funds
     ark_hover_lines = "<br>".join([f"{col}: %{{customdata[{i}]:.2f}}{unit}" for i, col in enumerate(ark_columns)])
 
+    # Add highlighted tickers to hover if any
+    if highlight_list:
+        highlight_hover_lines = "<br>".join([f"<b>{col}: %{{customdata[{len(ark_columns) + i}]:.2f}}{unit}</b>" for i, col in enumerate(highlight_list)])
+        full_hover = f"%{{x|%Y-%m-%d}}<br><b>%{{fullData.name}}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<br>---<br>{highlight_hover_lines}<extra></extra>"
+    else:
+        full_hover = f"%{{x|%Y-%m-%d}}<br><b>%{{fullData.name}}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>"
+
     # Add top100 lines
-    highlight_set = set(highlight_tickers) if highlight_tickers else set()
     for col in top100_columns:
         is_highlighted = col in highlight_set
         if is_highlighted:
@@ -130,8 +145,8 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             mode='lines',
             name=col,
             line=line_style,
-            customdata=ark_customdata,
-            hovertemplate=f"%{{x|%Y-%m-%d}}<br><b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>",
+            customdata=combined_customdata,
+            hovertemplate=full_hover,
             legendgroup=legend_group,
             showlegend=show_legend
         ))
@@ -145,8 +160,8 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
             mode='lines',
             name=col,
             line=dict(color=color, width=3),
-            customdata=ark_customdata,
-            hovertemplate=f"%{{x|%Y-%m-%d}}<br><b>{col}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>"
+            customdata=combined_customdata,
+            hovertemplate=full_hover
         ))
 
     # Add a dummy trace for legend grouping
