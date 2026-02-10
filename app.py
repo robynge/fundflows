@@ -9,14 +9,19 @@ def parse_aum(aum_str):
     if pd.isna(aum_str):
         return None
     aum_str = str(aum_str).replace('$', '').replace(',', '').strip()
-    if aum_str.endswith('B'):
-        return float(aum_str[:-1]) * 1000  # Convert B to M
-    elif aum_str.endswith('M'):
-        return float(aum_str[:-1])
-    elif aum_str.endswith('K'):
-        return float(aum_str[:-1]) / 1000
-    else:
-        return float(aum_str)
+    if aum_str in ['-', '', 'N/A', 'nan']:
+        return None
+    try:
+        if aum_str.endswith('B'):
+            return float(aum_str[:-1]) * 1000  # Convert B to M
+        elif aum_str.endswith('M'):
+            return float(aum_str[:-1])
+        elif aum_str.endswith('K'):
+            return float(aum_str[:-1]) / 1000
+        else:
+            return float(aum_str)
+    except ValueError:
+        return None
 
 @st.cache_data
 def load_data():
