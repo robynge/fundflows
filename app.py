@@ -122,8 +122,8 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
 
     # Add highlighted tickers to hover if any
     if highlight_list:
-        highlight_hover_lines = "<br>".join([f"<b>{col}: %{{customdata[{len(ark_columns) + i}]:.2f}}{unit}</b>" for i, col in enumerate(highlight_list)])
-        full_hover = f"%{{x|%Y-%m-%d}}<br><b>%{{fullData.name}}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<br>---<br>{highlight_hover_lines}<extra></extra>"
+        highlight_hover_lines = "<br>".join([f"{col}: %{{customdata[{len(ark_columns) + i}]:.2f}}{unit}" for i, col in enumerate(highlight_list)])
+        full_hover = f"%{{x|%Y-%m-%d}}<br><b>%{{fullData.name}}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<br>---<br><b>Highlight:</b><br>{highlight_hover_lines}<extra></extra>"
     else:
         full_hover = f"%{{x|%Y-%m-%d}}<br><b>%{{fullData.name}}: %{{y:.2f}}{unit}</b><br>---<br>{ark_hover_lines}<extra></extra>"
 
