@@ -149,7 +149,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         xaxis_title="Date",
         yaxis_title=y_title,
         height=600,
-        hovermode='x',
+        hovermode='closest',
         legend=dict(
             orientation="h",
             yanchor="bottom",
