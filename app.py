@@ -29,6 +29,7 @@ def load_data():
     ark_funds = pd.read_excel(xlsx, sheet_name='ARK funds')
     top100_inflows = pd.read_excel(xlsx, sheet_name='top100 inflows')
     top100_outflows = pd.read_excel(xlsx, sheet_name='top100 outflows')
+    etf_list = pd.read_excel(xlsx, sheet_name='list')
 
     # Convert Date columns
     for df in [ark_funds, top100_inflows, top100_outflows]:
@@ -43,14 +44,19 @@ def load_data():
         if aum:
             aum_dict[ticker] = aum
 
-    return ark_funds, top100_inflows, top100_outflows, aum_dict
+    # Load 1 Yr Fund Flow for sorting (by absolute value)
+    flow_1yr_dict = {}
+    for _, row in etf_list.iterrows():
+        ticker = row['Ticker']
+        flow = row['1 Yr Fund Flow']
+        if pd.notna(flow):
+            flow_1yr_dict[ticker] = flow
 
-def get_sorted_tickers(df, ascending=False):
-    """Sort tickers by total fund flows"""
-    cols = [col for col in df.columns if col != 'Date']
-    totals = {col: df[col].sum() for col in cols}
-    sorted_tickers = sorted(totals.keys(), key=lambda x: totals[x], reverse=not ascending)
-    return sorted_tickers
+    return ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict
+
+def get_sorted_tickers_by_1yr_flow(tickers, flow_1yr_dict):
+    """Sort tickers by absolute value of 1 Yr Fund Flow (largest first)"""
+    return sorted(tickers, key=lambda x: abs(flow_1yr_dict.get(x, 0)), reverse=True)
 
 def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers, aum_dict):
     """Create a plotly chart comparing ARK funds vs top100"""
@@ -161,11 +167,13 @@ def main():
     st.caption("Fund flows in $ Millions | AUM converted to Millions (B×1000, M×1)")
 
     # Load data
-    ark_funds, top100_inflows, top100_outflows, aum_dict = load_data()
+    ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict = load_data()
 
-    # Get sorted tickers
-    inflow_tickers_sorted = get_sorted_tickers(top100_inflows, ascending=False)  # Highest first
-    outflow_tickers_sorted = get_sorted_tickers(top100_outflows, ascending=True)  # Lowest first
+    # Get tickers sorted by absolute 1 Yr Fund Flow
+    inflow_tickers = [col for col in top100_inflows.columns if col != 'Date']
+    outflow_tickers = [col for col in top100_outflows.columns if col != 'Date']
+    inflow_tickers_sorted = get_sorted_tickers_by_1yr_flow(inflow_tickers, flow_1yr_dict)
+    outflow_tickers_sorted = get_sorted_tickers_by_1yr_flow(outflow_tickers, flow_1yr_dict)
 
     # Create tabs for different charts
     tab1, tab2, tab3 = st.tabs(["ARK vs Top100 Inflows", "ARK vs Top100 Outflows", "Download Data"])
