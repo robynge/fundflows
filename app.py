@@ -17,14 +17,21 @@ def load_data():
 
     return ark_funds, top100_inflows, top100_outflows
 
-def create_chart(ark_df, top100_df, chart_title, flow_type, value_type):
+def get_sorted_tickers(df, ascending=False):
+    """Sort tickers by total fund flows"""
+    cols = [col for col in df.columns if col != 'Date']
+    totals = {col: df[col].sum() for col in cols}
+    sorted_tickers = sorted(totals.keys(), key=lambda x: totals[x], reverse=not ascending)
+    return sorted_tickers
+
+def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected_tickers):
     """Create a plotly chart comparing ARK funds vs top100"""
     fig = go.Figure()
 
     # Get ARK fund columns
     ark_columns = [col for col in ark_df.columns if col != 'Date']
-    # Get top100 columns
-    top100_columns = [col for col in top100_df.columns if col != 'Date']
+    # Filter top100 columns based on selection
+    top100_columns = [col for col in selected_tickers if col in top100_df.columns]
 
     # Prepare data based on flow type
     if flow_type == "Cumulative":
@@ -53,7 +60,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type):
             mode='lines',
             name=col,
             line=dict(color='rgba(150, 150, 150, 0.3)', width=1),
-            hovertemplate=f'{col}<br>Date: %{{x}}<br>Value: %{{y:.2f}}<extra></extra>',
+            hovertemplate=f'{col}: %{{y:.2f}}<extra></extra>',
             legendgroup='top100',
             showlegend=False
         ))
@@ -76,7 +83,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type):
             mode='lines',
             name=col,
             line=dict(color=color, width=3),
-            hovertemplate=f'{col}<br>Date: %{{x}}<br>Value: %{{y:.2f}}<extra></extra>'
+            hovertemplate=f'{col}: %{{y:.2f}}<extra></extra>'
         ))
 
     # Add a dummy trace for legend grouping
@@ -98,7 +105,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type):
         xaxis_title="Date",
         yaxis_title=y_title,
         height=600,
-        hovermode='x unified',
+        hovermode='x',
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -117,52 +124,78 @@ def main():
     # Load data
     ark_funds, top100_inflows, top100_outflows = load_data()
 
+    # Get sorted tickers
+    inflow_tickers_sorted = get_sorted_tickers(top100_inflows, ascending=False)  # Highest first
+    outflow_tickers_sorted = get_sorted_tickers(top100_outflows, ascending=True)  # Lowest first
+
     # Create tabs for different charts
     tab1, tab2, tab3 = st.tabs(["ARK vs Top100 Inflows", "ARK vs Top100 Outflows", "Download Data"])
 
     with tab1:
         st.subheader("ARK Funds vs Top 100 Inflows")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            flow_type_1 = st.radio(
-                "Select Flow Type:",
-                ["Cumulative", "Daily"],
-                key="flow_type_inflows",
-                horizontal=True
-            )
-        with col2:
-            value_type_1 = st.radio(
-                "Select Value Type:",
-                ["Absolute Value", "Percentage Change"],
-                key="value_type_inflows",
-                horizontal=True
-            )
+        col_controls, col_chart = st.columns([1, 3])
 
-        fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1)
-        st.plotly_chart(fig1, use_container_width=True)
+        with col_controls:
+            flow_type_1 = st.radio(
+                "Flow Type:",
+                ["Cumulative", "Daily"],
+                key="flow_type_inflows"
+            )
+            value_type_1 = st.radio(
+                "Value Type:",
+                ["Absolute Value", "Percentage Change"],
+                key="value_type_inflows"
+            )
+            st.markdown("---")
+            st.markdown("**Filter Top 100 ETFs**")
+            select_all_1 = st.checkbox("Select All", value=True, key="select_all_inflows")
+            if select_all_1:
+                selected_inflows = inflow_tickers_sorted
+            else:
+                selected_inflows = st.multiselect(
+                    "Select ETFs:",
+                    options=inflow_tickers_sorted,
+                    default=inflow_tickers_sorted[:10],
+                    key="selected_inflows"
+                )
+
+        with col_chart:
+            fig1 = create_chart(ark_funds, top100_inflows, "ARK Funds vs Top 100 Inflows", flow_type_1, value_type_1, selected_inflows)
+            st.plotly_chart(fig1, width="stretch")
 
     with tab2:
         st.subheader("ARK Funds vs Top 100 Outflows")
 
-        col1, col2 = st.columns(2)
-        with col1:
-            flow_type_2 = st.radio(
-                "Select Flow Type:",
-                ["Cumulative", "Daily"],
-                key="flow_type_outflows",
-                horizontal=True
-            )
-        with col2:
-            value_type_2 = st.radio(
-                "Select Value Type:",
-                ["Absolute Value", "Percentage Change"],
-                key="value_type_outflows",
-                horizontal=True
-            )
+        col_controls, col_chart = st.columns([1, 3])
 
-        fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2)
-        st.plotly_chart(fig2, use_container_width=True)
+        with col_controls:
+            flow_type_2 = st.radio(
+                "Flow Type:",
+                ["Cumulative", "Daily"],
+                key="flow_type_outflows"
+            )
+            value_type_2 = st.radio(
+                "Value Type:",
+                ["Absolute Value", "Percentage Change"],
+                key="value_type_outflows"
+            )
+            st.markdown("---")
+            st.markdown("**Filter Top 100 ETFs**")
+            select_all_2 = st.checkbox("Select All", value=True, key="select_all_outflows")
+            if select_all_2:
+                selected_outflows = outflow_tickers_sorted
+            else:
+                selected_outflows = st.multiselect(
+                    "Select ETFs:",
+                    options=outflow_tickers_sorted,
+                    default=outflow_tickers_sorted[:10],
+                    key="selected_outflows"
+                )
+
+        with col_chart:
+            fig2 = create_chart(ark_funds, top100_outflows, "ARK Funds vs Top 100 Outflows", flow_type_2, value_type_2, selected_outflows)
+            st.plotly_chart(fig2, width="stretch")
 
     with tab3:
         st.subheader("Download Data")
@@ -210,11 +243,11 @@ def main():
         )
 
         if preview_option == "ARK Funds":
-            st.dataframe(ark_funds, use_container_width=True)
+            st.dataframe(ark_funds, width="stretch")
         elif preview_option == "Top 100 Inflows":
-            st.dataframe(top100_inflows, use_container_width=True)
+            st.dataframe(top100_inflows, width="stretch")
         else:
-            st.dataframe(top100_outflows, use_container_width=True)
+            st.dataframe(top100_outflows, width="stretch")
 
 if __name__ == "__main__":
     main()
