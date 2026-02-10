@@ -130,7 +130,11 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
         legendgroup='top100'
     ))
 
-    y_title = "Flow Value ($ Millions)" if value_type == "Absolute Value" else "% of AUM"
+    if value_type == "Absolute Value":
+        y_title = "Fund Flow ($ Millions)"
+    else:
+        y_title = "Fund Flow / AUM (%)"
+
     if flow_type == "Cumulative":
         y_title = "Cumulative " + y_title
 
@@ -154,6 +158,7 @@ def create_chart(ark_df, top100_df, chart_title, flow_type, value_type, selected
 def main():
     st.title("ETF Fund Flows Analysis")
     st.markdown("Comparing **ARK Funds** performance against Top 100 ETFs")
+    st.caption("Fund flows in $ Millions | AUM converted to Millions (B×1000, M×1)")
 
     # Load data
     ark_funds, top100_inflows, top100_outflows, aum_dict = load_data()
