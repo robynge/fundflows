@@ -52,7 +52,7 @@ def load_data():
         if pd.notna(flow):
             flow_1yr_dict[ticker] = flow
 
-    return ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict
+    return ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict, etf_list
 
 def get_sorted_tickers_by_1yr_flow(tickers, flow_1yr_dict):
     """Sort tickers by absolute value of 1 Yr Fund Flow (largest first)"""
@@ -179,7 +179,7 @@ def main():
     st.caption("Top 100 Inflows: ETFs with highest 1-Year Fund Flow | Top 100 Outflows: ETFs with lowest 1-Year Fund Flow")
 
     # Load data
-    ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict = load_data()
+    ark_funds, top100_inflows, top100_outflows, aum_dict, flow_1yr_dict, etf_list = load_data()
 
     # Get tickers sorted by absolute 1 Yr Fund Flow
     inflow_tickers = [col for col in top100_inflows.columns if col != 'Date']
@@ -257,54 +257,17 @@ def main():
     with tab3:
         st.subheader("Download Data")
 
-        st.markdown("### Available Datasets")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.markdown("**ARK Funds Data**")
-            csv_ark = ark_funds.to_csv(index=False)
+        with open('ETF_Fund_Flows_5016_Complete.xlsx', 'rb') as f:
             st.download_button(
-                label="Download ARK Funds CSV",
-                data=csv_ark,
-                file_name="ark_funds_flows.csv",
-                mime="text/csv"
-            )
-
-        with col2:
-            st.markdown("**Top 100 Inflows Data**")
-            csv_inflows = top100_inflows.to_csv(index=False)
-            st.download_button(
-                label="Download Top 100 Inflows CSV",
-                data=csv_inflows,
-                file_name="top100_inflows.csv",
-                mime="text/csv"
-            )
-
-        with col3:
-            st.markdown("**Top 100 Outflows Data**")
-            csv_outflows = top100_outflows.to_csv(index=False)
-            st.download_button(
-                label="Download Top 100 Outflows CSV",
-                data=csv_outflows,
-                file_name="top100_outflows.csv",
-                mime="text/csv"
+                label="Download ETF Fund Flows Data (Excel)",
+                data=f,
+                file_name="ETF_Fund_Flows_5016_Complete.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
 
         st.markdown("---")
-        st.markdown("### Data Preview")
-
-        preview_option = st.selectbox(
-            "Select data to preview:",
-            ["ARK Funds", "Top 100 Inflows", "Top 100 Outflows"]
-        )
-
-        if preview_option == "ARK Funds":
-            st.dataframe(ark_funds, width="stretch")
-        elif preview_option == "Top 100 Inflows":
-            st.dataframe(top100_inflows, width="stretch")
-        else:
-            st.dataframe(top100_outflows, width="stretch")
+        st.markdown("### Data Preview (5016 ETFs)")
+        st.dataframe(etf_list, width="stretch", height=500)
 
 if __name__ == "__main__":
     main()
